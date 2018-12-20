@@ -1,4 +1,5 @@
 import numpy as np
+from PIL import Image
 
 class Game():
     #An arena for the tron game, turns are synchronous. Both 'tails' are stored
@@ -9,13 +10,12 @@ class Game():
     #The outer edge of the area is a wall, don't run into it
     #
     #as 
-    def __init__( self):
+    def __init__(self):
         #Set up default game using parameters below
         self.VERBOSE = 1 #For debugging, 0 prints nothing, 1 prints end state, 2 prints all states
 
         self.arenaSize = (19,25)
-        self.tailLength = 10
-        self.tailThreshold = 2**self.tailLength
+        self.tailLength = 3
 
         #Blank Arena with walls
         self.gameState = np.zeros(self.arenaSize, np.int)
@@ -75,12 +75,12 @@ class Game():
         p2Pos = self.getPlayerPosition(2)
         
         #Update tail positions before moving players
-        self.p1Tail[p1Pos[0], p1Pos[1]] = 2
-        self.p2Tail[p2Pos[0], p2Pos[1]] = 2
-        self.p1Tail = np.power(self.p1Tail, 2)
-        self.p2Tail = np.power(self.p2Tail, 2)
-        self.p1Tail[np.where(self.p1Tail > self.tailThreshold)] = 0
-        self.p2Tail[np.where(self.p2Tail > self.tailThreshold)] = 0
+        self.p1Tail[p1Pos[0], p1Pos[1]] = 1
+        self.p2Tail[p2Pos[0], p2Pos[1]] = 1
+        self.p1Tail[np.where(self.p1Tail != 0)] += 1
+        self.p2Tail[np.where(self.p2Tail != 0)] += 1
+        self.p1Tail[np.where(self.p1Tail > self.tailLength+1)] = 0
+        self.p2Tail[np.where(self.p2Tail > self.tailLength+1)] = 0
         
         self.gameState[p1Pos[0], p1Pos[1]] = 0
         self.gameState[p2Pos[0], p2Pos[1]] = 0
@@ -174,14 +174,14 @@ class Game():
     def checkWallCollision(self, p1Pos, p2Pos):
         #Returns 0 if no players in wall square, 1 if p1 is, 2 if p2 is, 3 if both
         collision = 0
-        if(p1Pos[0] == 0 or p1Pos[0] == self.arenaSize[0]):
+        if(p1Pos[0] == 0 or p1Pos[0] >= self.arenaSize[0]):
             collision += 1
-        elif(p1Pos[1] == 0 or p1Pos[1] == self.arenaSize[1]):
+        elif(p1Pos[1] == 0 or p1Pos[1] >= self.arenaSize[1]):
             collision += 1
             
-        if(p2Pos[0] == 0 or p2Pos[0] == self.arenaSize[0]):
+        if(p2Pos[0] == 0 or p2Pos[0] >= self.arenaSize[0]):
             collision += 2
-        elif(p2Pos[1] == 0 or p2Pos[1] == self.arenaSize[1]):
+        elif(p2Pos[1] == 0 or p2Pos[1] >= self.arenaSize[1]):
             collision += 2
 
         return collision
@@ -204,10 +204,10 @@ class Game():
         return pos
         
     def getGameState(self):
-        #Returns the game state as a numpy array of [boardsize,boardsize] where
+        #Returns a copy of the game state as a numpy array of [boardsize,boardsize] where
         #player 1 is a a 1, player 2 is a 2, tails are 3 and the walls are 8.
         #You can use the getPlayerPosition to get the [row,col] position from the game board
-        outputState = self.gameState
+        outputState = np.copy(self.gameState)
         outputState[np.where((self.p1Tail + self.p2Tail) != 0)] = 3
         
         #to overlay player positions above tails
@@ -215,6 +215,25 @@ class Game():
         outputState[np.where(self.gameState == 2)] = 2
         
         return outputState
+        
+    def getGameImg(self):
+        #Formats the game state as a PIL image
+        imgState = self.getGameState()
+        #Adjust values for display
+        imgState[np.where(imgState == 1)] = 15
+        imgState[np.where(imgState == 2)] = 20
+        imgState[np.where(imgState == 3)] = 10
+        
+        imgState = 12*imgState
+        imgState = imgState.astype(np.uint8)
+        img = Image.fromarray(imgState)
+        
+        basewidth = 300
+        wpercent = (basewidth/float(img.size[0]))
+        hsize = int((float(img.size[1])*float(wpercent)))
+        img = img.resize((basewidth,hsize))
+
+        return img
     
 if __name__ == "__main__":
     game = Game()

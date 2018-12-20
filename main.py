@@ -6,9 +6,12 @@ import game
 import copy
 import bot1
 import bot2
+from matplotlib import pyplot as plt
 
 
 def playGame():
+    GUI = True #This is super inefficient
+    
     tronGame = game.Game()
     print(" === Starting a new game ===")
     
@@ -20,13 +23,19 @@ def playGame():
         print(tronGame.getGameState())
         
         #While nobody has won, get a move from each bot
-        p1Action = bot1.getAction(copy.deepcopy(tronGame))
-        p2Action = bot2.getAction(copy.deepcopy(tronGame))
+        p1Action = bot1.getAction(copy.deepcopy(tronGame), 1)
+        p2Action = bot2.getAction(copy.deepcopy(tronGame), 2)
+
+        startState = tronGame.getGameState()
         
+        if(GUI):        
+            img = tronGame.getGameImg()
+            plt.figure()
+            plt.imshow(img)
+            plt.show()
+            
         print('Player 1 goes ' + p1Action)
         print('Player 2 goes ' + p2Action)
-        
-        startState = tronGame.getGameState()
         
         #Evolve the game state        
         tronGame.step(p1Action,p2Action)
@@ -46,6 +55,8 @@ def playGame():
         if(tronGame.terminal == True):
             break
 
+    return memory
+    
 if __name__ == "__main__":
     gameMemories = []
     
