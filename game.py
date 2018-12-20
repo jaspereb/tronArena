@@ -1,8 +1,6 @@
 import numpy as np
-import utils
 
-
-class Game( ):
+class Game():
     #An arena for the tron game, turns are synchronous. Both 'tails' are stored
     #internally using counters but are returned as a binary map of occupied/unocc.
     
@@ -13,9 +11,11 @@ class Game( ):
     #as 
     def __init__( self):
         #Set up default game using parameters below
+        self.VERBOSE = 1 #For debugging, 0 prints nothing, 1 prints end state, 2 prints all states
 
         self.arenaSize = (19,25)
         self.tailLength = 10
+        self.tailThreshold = 2**self.tailLength
 
         #Blank Arena with walls
         self.gameState = np.zeros(self.arenaSize, np.int)
@@ -39,9 +39,8 @@ class Game( ):
         #If the game is in a terminal state
         self.terminal = False
         
-        #The reward according to player 1. 1 for win, -1 for loss, 0.1 for draw
-        self.p1Reward = None
-
+        #Winner, is 'player1' or 'player2' or 'draw'
+        self.winner = None
 
     def step(self, p1Action, p2Action):
         #Takes a single step in the environment, each action should be one of the following:
@@ -49,82 +48,174 @@ class Game( ):
         # 'right'
         # 'up'
         # 'down'
-        #If none of these is input, 'left' is assumed. 
+        #If none of these is input, the previous action is used (ie, go straight)
         # THIS IS WITH RESPECT TO THE BOARD NOT THE PLAYER
 
         #If you run into a wall or a tail you lose. Hitting the other player is a draw. 
         
-        #Get current player positions
-        p1Pos = self.getPlayerPosition(self, 1)
-        p2Pos = self.getPlayerPosition(self, 2)
+        if(self.VERBOSE>1):
+            print("Prior to move, the arena looks like:  ")
+            print(self.getGameState())
+                
+        if(p1Action == None):
+            p1Action = self.lastP1Action
+            if(self.VERBOSE>0):
+                print("No action specified, using previous action")
+        if(p2Action == None):
+            p2Action = self.lastP2Action
+            if(self.VERBOSE>0):
+                print("No action specified, using previous action")
+            
+        self.lastP1Action = p1Action
+        self.lastP2Action = p2Action
         
-        self.gameState[p1Pos] = 0
-        self.gameState[p2Pos] = 0
+        
+        #Get current player positions
+        p1Pos = self.getPlayerPosition(1)
+        p2Pos = self.getPlayerPosition(2)
+        
+        #Update tail positions before moving players
+        self.p1Tail[p1Pos[0], p1Pos[1]] = 2
+        self.p2Tail[p2Pos[0], p2Pos[1]] = 2
+        self.p1Tail = np.power(self.p1Tail, 2)
+        self.p2Tail = np.power(self.p2Tail, 2)
+        self.p1Tail[np.where(self.p1Tail > self.tailThreshold)] = 0
+        self.p2Tail[np.where(self.p2Tail > self.tailThreshold)] = 0
+        
+        self.gameState[p1Pos[0], p1Pos[1]] = 0
+        self.gameState[p2Pos[0], p2Pos[1]] = 0
         
         #First move both players to new positions
         if(p1Action == 'left'):
             p1Pos[1] = p1Pos[1]-1
+        elif(p1Action == 'right'):
+            p1Pos[1] = p1Pos[1]+1
+        elif(p1Action == 'up'):
+            p1Pos[0] = p1Pos[0]-1
+        elif(p1Action == 'down'):
+            p1Pos[0] = p1Pos[0]+1
+        else:
+            print("INVALID P1 ACTION")
+            print(p1Action)
+            return
+            
+        if(p2Action == 'left'):
+            p2Pos[1] = p2Pos[1]-1
+        elif(p2Action == 'right'):
+            p2Pos[1] = p2Pos[1]+1
+        elif(p2Action == 'up'):
+            p2Pos[0] = p2Pos[0]-1
+        elif(p2Action == 'down'):
+            p2Pos[0] = p2Pos[0]+1
+        else:
+            print("INVALID P2 ACTION")
+            print(p2Action)
+            return
+            
+        self.gameState[p1Pos[0], p1Pos[1]] = 1
+        self.gameState[p2Pos[0], p2Pos[1]] = 2
         
-        self.gameState[p1Pos] = 1
-        self.gameState[p2Pos] = 2
+        if(self.VERBOSE>1):
+            print("After the move, the arena looks like:  ")
+            print(self.getGameState())
+        
+        #Check player-player collision
+        if(np.array_equal(p1Pos,p2Pos)):
+            if(self.VERBOSE>0):
+                print("DRAW: Game ended with player to player collision")
+            self.terminal = True
+            self.winner = 'draw'
+            return
+        
+        #Check player-wall collision
+        collision = self.checkWallCollision(p1Pos, p2Pos)
+        
+        if(collision == 1):
+            if(self.VERBOSE>0):
+                print("P2 Wins: Game ended with player 1 hitting the wall")
+            self.terminal = True
+            self.winner = 'player2'
+            return
+        elif(collision == 2):
+            if(self.VERBOSE>0):
+                print("P1 Wins: Game ended with player 2 hitting the wall")
+            self.terminal = True
+            self.winner = 'player1'
+            return
+        elif(collision == 3):
+            if(self.VERBOSE>0):
+                print("DRAW: Game ended with both players hitting the wall")
+            self.terminal = True
+            self.winner = 'draw'   
+            return
 
-    def check_for_win( self, playerID, target=4 ):
-        # ---------------------------------------------------
-        # inputs:
-        #   player id ==> player to check. 1 or 2
-        #   target ==> how many consecutive tokens to win. default=4
-        # outputs:
-        #   FLAG_win ==> 1-player wins, 0-no win
-        # ---------------------------------------------------
+        #Check player-tail collision
+        collision = self.checkTailCollision(p1Pos, p2Pos)
+        
+        if(collision == 1):
+            if(self.VERBOSE>0):
+                print("P2 Wins: Game ended with player 1 hitting a tail")
+            self.terminal = True
+            self.winner = 'player2'
+            return
+        elif(collision == 2):
+            if(self.VERBOSE>0):
+                print("P1 Wins: Game ended with player 2 hitting a tail")
+            self.terminal = True
+            self.winner = 'player1'
+            return
+        elif(collision == 3):
+            if(self.VERBOSE>0):
+                print("DRAW: Game ended with both players hitting a tail")
+            self.terminal = True
+            self.winner = 'draw' 
+            return
+        
+    def checkWallCollision(self, p1Pos, p2Pos):
+        #Returns 0 if no players in wall square, 1 if p1 is, 2 if p2 is, 3 if both
+        collision = 0
+        if(p1Pos[0] == 0 or p1Pos[0] == self.arenaSize[0]):
+            collision += 1
+        elif(p1Pos[1] == 0 or p1Pos[1] == self.arenaSize[1]):
+            collision += 1
+            
+        if(p2Pos[0] == 0 or p2Pos[0] == self.arenaSize[0]):
+            collision += 2
+        elif(p2Pos[1] == 0 or p2Pos[1] == self.arenaSize[1]):
+            collision += 2
 
-        # identify playerID's tokens
-        playerState = self.gameState == playerID
-
-        FLAG_win = 0
-
-        # check for horizontal win
-        for i in range( self.boardSize[0] ):
-            if np.sum( np.convolve( playerState[i,:] , np.ones((target))) >= target ):
-                FLAG_win = 1
-
-        # check for vertical win
-        for i in range( self.boardSize[1] ):
-            if np.sum( np.convolve( playerState[:,i] , np.ones((target))) >= target ):
-                FLAG_win = 1
-
-        # check for diagonal win
-        diag1 = np.eye(target)
-        diag2 = diag1[::-1,:]
-        for i in range( self.boardSize[0] - target + 1 ):
-            for j in range(self.boardSize[1] - target + 1):
-                if (np.sum( diag1*playerState[i:i+target,j:j+target] ) == target) | (np.sum( diag2*playerState[i:i+target,j:j+target] ) == target):
-                    FLAG_win = 1
-                    break
-
-        return FLAG_win
-
-
+        return collision
+    
+    def checkTailCollision(self, p1Pos, p2Pos):
+        #Returns 0 if no players in tail square, 1 if p1 is, 2 if p2 is, 3 if both
+        collision = 0
+        tails = self.p1Tail + self.p2Tail
+        if(tails[p1Pos[0], p1Pos[1]] != 0):
+            collision += 1
+        if(tails[p2Pos[0], p2Pos[1]] != 0):
+            collision += 2    
+        return collision
+        
     def getPlayerPosition(self, playerNum):
-        #Playernum is 1 or 2. Returns a tuple of (row, col)
+        #Playernum is 1 or 2. Returns an array of (row, col)
         row = int(np.where(self.gameState == playerNum)[0])
         col = int(np.where(self.gameState == playerNum)[1])
-        pos = [row, col]
+        pos = np.asarray([row, col])
         return pos
         
-    def check_for_draw( self ):
-        # ---------------------------------------------------
-        # inputs:
-        #   none
-        #
-        # outputs:
-        #   ==> 1-draw, 0-no draw --------------------------------
-
-        # draw if no free spaces on top row
-        if np.sum( self.gameState[0,:] == 0 ) == 0:
-            return 1
-        else:
-            return 0
+    def getGameState(self):
+        #Returns the game state as a numpy array of [boardsize,boardsize] where
+        #player 1 is a a 1, player 2 is a 2, tails are 3 and the walls are 8.
+        #You can use the getPlayerPosition to get the [row,col] position from the game board
+        outputState = self.gameState
+        outputState[np.where((self.p1Tail + self.p2Tail) != 0)] = 3
         
+        #to overlay player positions above tails
+        outputState[np.where(self.gameState == 1)] = 1
+        outputState[np.where(self.gameState == 2)] = 2
+        
+        return outputState
+    
 if __name__ == "__main__":
     game = Game()
     print(game.gameState)
