@@ -7,3 +7,7 @@ Run the main.py file. See 'Actually Read Me' for the game rules.
 -matplotlib  
 -numpy  
 -PIL  
+
+## ToDo
+-Write ROS node wrapper for competition  
+-Fix bug in bot 1 that causes it to run into it's own tail  
