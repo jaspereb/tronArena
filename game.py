@@ -15,7 +15,7 @@ class Game():
         self.VERBOSE = 1 #For debugging, 0 prints nothing, 1 prints end state, 2 prints all states
 
         self.arenaSize = (19,25)
-        self.tailLength = 3
+        self.tailLength = 8
 
         #Blank Arena with walls
         self.gameState = np.zeros(self.arenaSize, np.int)
@@ -174,14 +174,14 @@ class Game():
     def checkWallCollision(self, p1Pos, p2Pos):
         #Returns 0 if no players in wall square, 1 if p1 is, 2 if p2 is, 3 if both
         collision = 0
-        if(p1Pos[0] == 0 or p1Pos[0] >= self.arenaSize[0]):
+        if(p1Pos[0] == 0 or p1Pos[0] == self.arenaSize[0]-1):
             collision += 1
-        elif(p1Pos[1] == 0 or p1Pos[1] >= self.arenaSize[1]):
+        elif(p1Pos[1] == 0 or p1Pos[1] == self.arenaSize[1]-1):
             collision += 1
             
-        if(p2Pos[0] == 0 or p2Pos[0] >= self.arenaSize[0]):
+        if(p2Pos[0] == 0 or p2Pos[0] == self.arenaSize[0]-1):
             collision += 2
-        elif(p2Pos[1] == 0 or p2Pos[1] >= self.arenaSize[1]):
+        elif(p2Pos[1] == 0 or p2Pos[1] == self.arenaSize[1]-1):
             collision += 2
 
         return collision

@@ -1,11 +1,11 @@
-'''Sample bot'''
+'''Sample bot, will choose the first non losing move assuming the opponent always
+    goes left (if p1) or right (if p2)'''
 
 import numpy as np
 import random
 import copy
 
 def getAction(game, playerNum):
-    
     possibleActions = ['left','right','up','down']
     random.shuffle(possibleActions)
     
@@ -16,6 +16,7 @@ def getAction(game, playerNum):
         if(playerNum == 1):
             gameCopy.step(action, 'left')
             if(gameCopy.winner == 'player2' or gameCopy.winner == 'draw'): #A losing move
+                print("bot 1 skipping " + action)
                 continue
         elif(playerNum == 2):
             gameCopy.step('right', action)

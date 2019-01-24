@@ -14,3 +14,7 @@ Some implementation details:
 -The square you were previously on becomes a tail, the final square of your tail is erased
 -If you hit a wall at the same move your opponent hits a tail, you are the loser
 -If your bot tries to move back on itself you will hit your own tail and lose, implement your own don't-make-a-U-turn code
+-2 sample bots are provided, an optimal one step lookahead bot called baselineBot.py and a simplified lookahead bot called bot1.py
+
+Troubleshooting:
+

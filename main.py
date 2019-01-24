@@ -4,8 +4,7 @@ game.py file. A SARS' sequence is stored for RL'''
 
 import game
 import copy
-import bot1
-import bot2
+import baselineBot
 from matplotlib import pyplot as plt
 
 
@@ -23,8 +22,8 @@ def playGame():
         print(tronGame.getGameState())
         
         #While nobody has won, get a move from each bot
-        p1Action = bot1.getAction(copy.deepcopy(tronGame), 1)
-        p2Action = bot2.getAction(copy.deepcopy(tronGame), 2)
+        p1Action = baselineBot.getAction(copy.deepcopy(tronGame), 1)
+        p2Action = baselineBot.getAction(copy.deepcopy(tronGame), 2)
 
         startState = tronGame.getGameState()
         
@@ -34,8 +33,9 @@ def playGame():
             plt.imshow(img)
             plt.show()
             
-        print('Player 1 goes ' + p1Action)
-        print('Player 2 goes ' + p2Action)
+        #Note, if it is grayscale (as in python3), player 1 is the darker one
+        print('Player 1 (yellow) goes ' + p1Action)
+        print('Player 2 (red) goes ' + p2Action)
         
         #Evolve the game state        
         tronGame.step(p1Action,p2Action)
