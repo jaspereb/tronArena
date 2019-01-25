@@ -14,8 +14,8 @@ class Game():
         #Set up default game using parameters below
         self.VERBOSE = 1 #For debugging, 0 prints nothing, 1 prints end state, 2 prints all states
 
-        self.arenaSize = (100,150) #19,25 is the default
-        self.tailLength = 100000
+        self.arenaSize = (19,25) #19,25 is the default
+        self.tailLength = 100000 #Set this low if you want to play in snake mode
 
         #Blank Arena with walls
         self.gameState = np.zeros(self.arenaSize, np.int)
