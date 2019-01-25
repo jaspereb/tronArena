@@ -14,8 +14,8 @@ class Game():
         #Set up default game using parameters below
         self.VERBOSE = 1 #For debugging, 0 prints nothing, 1 prints end state, 2 prints all states
 
-        self.arenaSize = (19,25)
-        self.tailLength = 12
+        self.arenaSize = (100,150) #19,25 is the default
+        self.tailLength = 100000
 
         #Blank Arena with walls
         self.gameState = np.zeros(self.arenaSize, np.int)

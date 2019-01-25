@@ -9,7 +9,7 @@ def getAction(game, playerNum):
     possibleActions = ['left','right','up','down']
     
     #Uncomment this line to avoid the snakes doing laps forever
-    #random.shuffle(possibleActions)
+#    random.shuffle(possibleActions)
     
     #Store the action values for each possible action
     V = np.ones((4,1))
