@@ -15,7 +15,7 @@ class Game():
         self.VERBOSE = 1 #For debugging, 0 prints nothing, 1 prints end state, 2 prints all states
 
         self.arenaSize = (19,25)
-        self.tailLength = 8
+        self.tailLength = 12
 
         #Blank Arena with walls
         self.gameState = np.zeros(self.arenaSize, np.int)
