@@ -1,7 +1,7 @@
 # TRONArena
 This program is a tron (2 player snake) game arena. It defines a game class (similar to the connect4 game) along with some helper methods. 
 
-Run the main.py file.
+Clone or download the code from [here](https://github.com/jaspereb/tronArena/releases/latest) then run the main.py file.
 
 The GUI should behave properly if you run it in an environment that stops pop up windows (eg a notebook or the Spyder IDE), otherwise you have to manually close each GUI frame. 
 
